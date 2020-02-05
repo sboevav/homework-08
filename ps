@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Процедура вычисления параметров процесса по заданному pid
+# все данные получаем обработкой /proc/<pid>/stat
+# при разборе данных псевдотерминалы не определяем 
+# и не заморачиваемся сильно со статусом, 
+# поэтому есть небольшие расхождения с оригинальной командой ps
+CpuUsage () {
+  stat=$(cat /proc/$1/stat)
+  stat=${stat/\(*\)/}
+  statValues=( $(echo $stat | awk '{print $6, $13, $14, $15, $16}') )
+
+  ttyNr=${statValues[0]}
+  uTime=${statValues[1]}
+  sTime=${statValues[2]}
+  cuTime=${statValues[3]}
+  csTime=${statValues[4]}
+
+  let "ttyMinor = ttyNr & 255"
+  let "ttyMajor = (ttyNr & 255)/256"
+
+  if [ "$ttyMinor" -eq 0 ]
+  then 
+    ttyNum="?"
+  else
+    ttyNum="tty$ttyMinor"
+  fi
+
+  hertz=$(getconf CLK_TCK)
+  let "totalTime = (uTime + sTime + cuTime + csTime)/hertz"
+  let "procMinutes = totalTime / 60"
+  let "procSeconds = totalTime - procMinutes * 60"
+}
+
+# Сначала проверим наличие параметра и его значение
+if [ -n "$1" ]
+then
+  if [ $1 = 'ax' ]
+  then
+    # занесем в массив все процесссы
+    array=( $(ls /proc | grep "^[0-9]\+$" | sort -n) )
+
+    # обработаем все процессы
+    (echo "PID TTY STAT TIME COMMAND"
+    for i in ${array[@]}
+    do
+      if [ -f /proc/$i/stat ]
+      then
+        CpuUsage $i
+        echo $i $ttyNum $(cat /proc/$i/status | awk '/State/{print $2}') $procMinutes:$(printf "%02d " $procSeconds) $(cat /proc/$i/status | awk '/Name/{print $2}')
+      fi
+    done) | column -t
+
+    exit 0
+  else
+    echo "error: unsupported option"
+  fi
+else
+  echo "error: no option found"
+fi
+
+# выведем справочную информацию
+echo -e "\nUsage: ps <option>"
+echo "  ax	- all processes with tty, including other users and without controlling ttys"
+exit 1
+
