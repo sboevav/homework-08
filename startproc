@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# -2:15
+
+#echo "proc1 is started"
+#nice -n 19 ./proc1 &
+taskset 2 nice -n 19 ./proc1 &
+
+#echo "proc2 is started"
+#nice -n 0 ./proc1 &
+taskset 2 nice -n 0 ./proc1 &
+
+# Дадим время запуститься процессам
+sleep 1
+ps -l
+
+exit 0
+

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+CpuUsage () {
+  stat=$(cat /proc/$$/stat)
+  stat=${stat/\(*\)/}
+  statValues=( $(echo $stat | awk '{print $13, $14, $15, $16}') )
+
+  uTime=${statValues[0]}
+  sTime=${statValues[1]}
+  cuTime=${statValues[2]}
+  csTime=${statValues[3]}
+
+  hertz=$(getconf CLK_TCK)
+  let "procSeconds = uTime + sTime + cuTime + csTime"
+}
+
+DoWork () {
+a=1
+while [ "$a" -lt $1 ]
+do
+  let a++
+done;
+}
+
+echo hello from process $$
+
+startValue=100000
+DoWork $startValue
+CpuUsage 
+
+let "counterValue=10*startValue*hertz/procSeconds-startValue"
+DoWork $counterValue
+let counterValue+=startValue
+echo "Process $$. Work done. Total counter value is $counterValue"
+exit 0
+
+
+

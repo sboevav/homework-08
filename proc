@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# -2:15
+
+echo hello
+
+#a=1
+#while (  ) 
+#do
+#a=$a*2
+#done;
+
+
+RANDOM=10
+JOBS_COUNTER=0
+MAX_CHILDREN=10
+MY_PID=$$
+
+for i in {1..100}
+do
+    echo Cycle counter: $i
+    JOBS_COUNTER=$((`ps ax -Ao ppid | grep $MY_PID | wc -l`))
+    while [ $JOBS_COUNTER -ge $MAX_CHILDREN ]
+    do
+        JOBS_COUNTER=$((`ps ax -Ao ppid | grep $MY_PID | wc -l`))
+        echo Jobs counter: $JOBS_COUNTER
+        sleep 1
+    done
+    sleep $(($RANDOM % 30)) &
+done
+echo Finishing children ...
+# wait for children here
+while [ $JOBS_COUNTER -gt 1 ]
+do
+    JOBS_COUNTER=$((`ps ax -Ao ppid | grep $MY_PID | wc -l`))
+    echo Jobs counter: $JOBS_COUNTER
+    sleep 1
+done
+echo Done
