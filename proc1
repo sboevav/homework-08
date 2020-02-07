@@ -1,19 +1,18 @@
 #!/bin/bash
 
+# Процедура вычисления времени выполнения процесса
 CpuUsage () {
   stat=$(cat /proc/$$/stat)
-  stat=${stat/\(*\)/}
-  statValues=( $(echo $stat | awk '{print $13, $14, $15, $16}') )
-
+  statValues=( $(echo $stat | awk '{print $14, $15, $16, $17}') )
   uTime=${statValues[0]}
   sTime=${statValues[1]}
   cuTime=${statValues[2]}
   csTime=${statValues[3]}
-
   hertz=$(getconf CLK_TCK)
   let "procSeconds = uTime + sTime + cuTime + csTime"
 }
 
+# Процедура для 100%-ой загрузки процессора
 DoWork () {
 a=1
 while [ "$a" -lt $1 ]
@@ -22,16 +21,22 @@ do
 done;
 }
 
-echo hello from process $$
+# Вывод идентификатора процесса и времени запуска
+echo Process $$. Start time: $(date)
 
+# Начальная загрузка процессора.
 startValue=100000
 DoWork $startValue
+# Вычисление времени, потраченного на первоначальную загрузку процессора
 CpuUsage 
-
+# Вычисление значения счетчика, необходимого для суммарной загрузки процессора примерно на 10 секунд
 let "counterValue=10*startValue*hertz/procSeconds-startValue"
+# Окончательная загрузка процессора на оставшееся время до 10 секунд
 DoWork $counterValue
 let counterValue+=startValue
-echo "Process $$. Work done. Total counter value is $counterValue"
+# Вывод достигнутого значения счетчика циклов и времени окончания выполнения процесса
+echo "Process $$. Finish Time: $(date). Counter value: $counterValue". 
+
 exit 0
 
 

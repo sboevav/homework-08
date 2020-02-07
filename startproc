@@ -1,18 +1,25 @@
 #!/bin/bash
 
-# -2:15
+# Запуск первого процесса на первом процессоре
+# зададим для первого процесса самый низкий приоритет (19)
+taskset 1 nice -n 19 ./proc1 &
 
-#echo "proc1 is started"
-#nice -n 19 ./proc1 &
-taskset 2 nice -n 19 ./proc1 &
+# Запуск второго процесса на первом процессоре
+# зададим для второго процесса средний приоритет (0)
+taskset 1 nice -n 0 ./proc1 &
 
-#echo "proc2 is started"
-#nice -n 0 ./proc1 &
-taskset 2 nice -n 0 ./proc1 &
-
-# Дадим время запуститься процессам
+# Дадим время запуститься процессам и выведем информацию о процессах
 sleep 1
 ps -l
+
+# Дождемся завершения выполнения дочерних процессов и затем завершим работу
+ProcessPid=$$
+jobsCounter=$((`ps ax -Ao ppid | grep $ProcessPid | wc -l`))
+while [ $jobsCounter -gt 1 ]
+do
+    jobsCounter=$((`ps ax -Ao ppid | grep $ProcessPid | wc -l`))
+    sleep 1
+done
 
 exit 0
 
