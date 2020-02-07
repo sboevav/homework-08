@@ -33,9 +33,11 @@ CpuUsage
 let "counterValue=10*startValue*hertz/procSeconds-startValue"
 # Окончательная загрузка процессора на оставшееся время до 10 секунд
 DoWork $counterValue
-let counterValue+=startValue
-# Вывод достигнутого значения счетчика циклов и времени окончания выполнения процесса
-echo "Process $$. Finish Time: $(date). Counter value: $counterValue". 
+# Вычисление времени, потраченного на всю работу процесса
+CpuUsage
+# Вывод времени окончания выполнения процесса и затраченного процессорного времени
+let "procSeconds/=hertz"
+echo "Process $$. Finish Time: $(date). Elapsed time: $procSeconds sec."
 
 exit 0
 
